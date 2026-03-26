@@ -12,6 +12,8 @@
     "dev:console": "ulimit -n 10240 2>/dev/null; bun run --cwd packages/console/app dev",
     "dev:storybook": "bun --cwd packages/storybook storybook",
     "typecheck": "bun turbo typecheck",
+    "weave:validate": "bun run --cwd packages/opencode typecheck && bun --cwd packages/opencode test test/config/tui-weave-sync.test.ts test/cli/session-weave-command.test.ts test/server/session-weave.test.ts test/session/llm-oauth-contract.test.ts",
+    "weave:proof": "bun weave/scripts/weave_e2e_proof.ts",
     "prepare": "husky",
     "random": "echo 'Random script'",
     "hello": "echo 'Hello World!'",
