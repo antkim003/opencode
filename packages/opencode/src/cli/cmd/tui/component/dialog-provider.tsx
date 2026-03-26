@@ -37,18 +37,13 @@ export function createDialogProviderOptions() {
         value: provider.id,
         description: {
           opencode: "(Recommended)",
-          anthropic: "(API key)",
+          anthropic: "(API key or Claude OAuth)",
           openai: "(ChatGPT Plus/Pro or API key)",
           "opencode-go": "Low cost subscription for everyone",
         }[provider.id],
         category: provider.id in PROVIDER_PRIORITY ? "Popular" : "Other",
         async onSelect() {
-          const methods = sync.data.provider_auth[provider.id] ?? [
-            {
-              type: "api",
-              label: "API key",
-            },
-          ]
+          const methods = sync.data.provider_auth[provider.id] ?? [{ type: "api", label: "API key" }]
           let index: number | null = 0
           if (methods.length > 1) {
             index = await new Promise<number | null>((resolve) => {

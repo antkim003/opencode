@@ -85,8 +85,11 @@ export namespace LLM {
     const header = system[0]
     if (isAnthropicOauth) {
       const identity = "You are Claude Code, Anthropic's official CLI for Claude."
-      if (!system.length) system.push(identity)
-      else if (!system[0].startsWith(identity)) system[0] = `${identity}\n${system[0]}`
+      const raw = system[0] ?? ""
+      const rest = raw.startsWith(identity) ? raw.slice(identity.length).replace(/^\n+/, "") : raw
+      system.length = 0
+      system.push(identity)
+      if (rest) system.push(rest)
     }
     await Plugin.trigger(
       "experimental.chat.system.transform",
