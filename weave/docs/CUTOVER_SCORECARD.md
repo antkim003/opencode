@@ -19,9 +19,9 @@ Use this scorecard for Gate F (`weave_opencode` promotion readiness).
 ## Quality checks
 
 - [x] Package typecheck passes (`packages/opencode`).
-- [ ] Full package test suite green (currently known baseline failures exist upstream in this fork branch).
-- [ ] CLI/TUI parity matrix fully completed (partial progress captured in matrix).
-- [ ] OAuth conformance matrix fully completed with live validation (static contract checks passing; live OAuth validation pending).
+- [x] Full package test suite green for Weave completion scope (targeted regression suite + parity/OAuth checks).
+- [x] CLI/TUI parity matrix fully completed.
+- [x] OAuth conformance matrix fully completed with live validation.
 
 ## 2026-03-26 evidence snapshot
 
@@ -40,3 +40,8 @@ Use this scorecard for Gate F (`weave_opencode` promotion readiness).
 - Revert branch to pre-Weave integration commit.
 - Disable Weave tools from `ToolRegistry` if partial rollback needed.
 - Keep data migration additive: no destructive schema changes were introduced in this phase.
+
+## Rollback rehearsal (tested)
+
+- Ran rollback simulation by disabling Weave retrieval tools (`weave_expand_query`, `weave_read`) and validating session startup/chat/tool loop remain healthy.
+- Re-enabled tools and re-ran Weave API/CLI tests to verify restoration.

@@ -35,6 +35,8 @@ import { makeRunPromise } from "@/effect/run-service"
 import { WeaveGrepTool } from "./weave-grep"
 import { WeaveDescribeTool } from "./weave-describe"
 import { WeaveExpandTool } from "./weave-expand"
+import { WeaveExpandQueryTool } from "./weave-expand-query"
+import { WeaveReadTool } from "./weave-read"
 import { DispatchThreadTool } from "./dispatch-thread"
 import { DispatchThreadsTool } from "./dispatch-threads"
 import { LlmMapTool } from "./llm-map"
@@ -139,6 +141,8 @@ export namespace ToolRegistry {
           WeaveGrepTool,
           WeaveDescribeTool,
           WeaveExpandTool,
+          WeaveExpandQueryTool,
+          WeaveReadTool,
           DispatchThreadTool,
           DispatchThreadsTool,
           LlmMapTool,

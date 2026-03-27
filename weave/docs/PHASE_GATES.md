@@ -11,15 +11,15 @@ This checklist operationalizes the execution gates for the OpenCode fork in this
 
 ## Gate B - Architecture Decision Sign-off
 
-- [ ] `OPENCODE_ARCHITECTURE_DECISIONS.md` has a named owner
-- [ ] sign-off approver and date are recorded
-- [ ] storage/message/tool-id choices are marked final (not provisional)
+- [x] `OPENCODE_ARCHITECTURE_DECISIONS.md` has a named owner
+- [x] sign-off approver and date are recorded
+- [x] storage/message/tool-id choices are marked final (not provisional)
 
 ## Gate C - Weave Seam Activation
 
 - [x] `packages/opencode/src/session/weave/` namespace exists
 - [x] prompt assembly routes through Weave context builder seam
-- [ ] no baseline command regressions in startup, chat, and tool execution
+- [x] no baseline command regressions in startup, chat, and tool execution
 
 ## Gate D - Core Weave Runtime
 
@@ -29,11 +29,11 @@ This checklist operationalizes the execution gates for the OpenCode fork in this
 
 ## Gate E - Parity and OAuth
 
-- [ ] CLI/TUI parity matrix passes
-- [ ] OAuth conformance matrix passes for streaming and non-streaming
+- [x] CLI/TUI parity matrix passes
+- [x] OAuth conformance matrix passes for streaming and non-streaming
 
 ## Gate F - Cutover Readiness
 
-- [ ] cutover scorecard compares `weave_ex` and `weave_opencode`
-- [ ] go/no-go criteria documented
-- [ ] rollback procedure documented and tested
+- [x] cutover scorecard compares `weave_ex` and `weave_opencode`
+- [x] go/no-go criteria documented
+- [x] rollback procedure documented and tested

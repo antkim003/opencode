@@ -8,14 +8,16 @@ import { Spinner } from "@opencode-ai/ui/spinner"
 import { showToast } from "@opencode-ai/ui/toast"
 import { Tooltip, TooltipKeybind } from "@opencode-ai/ui/tooltip"
 import { getFilename } from "@opencode-ai/util/path"
-import { createEffect, createMemo, For, onCleanup, Show } from "solid-js"
+import { createEffect, createMemo, createSignal, For, onCleanup, Show } from "solid-js"
 import { createStore } from "solid-js/store"
 import { Portal } from "solid-js/web"
+import type { ToolPart } from "@opencode-ai/sdk/v2"
 import { useCommand } from "@/context/command"
 import { useLanguage } from "@/context/language"
 import { useLayout } from "@/context/layout"
 import { usePlatform } from "@/context/platform"
 import { useServer } from "@/context/server"
+import { useSDK } from "@/context/sdk"
 import { useSync } from "@/context/sync"
 import { useTerminal } from "@/context/terminal"
 import { focusTerminalById } from "@/pages/session/helpers"
@@ -135,6 +137,7 @@ export function SessionHeader() {
   const platform = usePlatform()
   const language = useLanguage()
   const sync = useSync()
+  const sdk = useSDK()
   const terminal = useTerminal()
   const { params, view } = useSessionLayout()
 
@@ -224,6 +227,80 @@ export function SessionHeader() {
   const tint = createMemo(() =>
     messageAgentColor(params.id ? sync.data.message[params.id] : undefined, sync.data.agent),
   )
+  const sessionStatus = createMemo(() => {
+    if (!params.id) return { type: "idle" as const }
+    return sync.data.session_status[params.id] ?? { type: "idle" as const }
+  })
+  const activeTool = createMemo(() => {
+    if (!params.id) return
+    const messages = sync.data.message[params.id] ?? []
+    const pending = messages.findLast((message) => message.role === "assistant" && !message.time.completed)
+    if (!pending) return
+    const parts = sync.data.part[pending.id] ?? []
+    return parts.findLast(
+      (part): part is ToolPart =>
+        part.type === "tool" && (part.state.status === "pending" || part.state.status === "running"),
+    )
+  })
+  const hasPendingAssistant = createMemo(() => {
+    if (!params.id) return false
+    const messages = sync.data.message[params.id] ?? []
+    return messages.some((message) => message.role === "assistant" && !message.time.completed)
+  })
+  const runningLabel = createMemo(() => {
+    const status = sessionStatus()
+    if (status.type === "retry") {
+      if (typeof status.next === "number") {
+        const seconds = Math.max(0, Math.ceil((status.next - Date.now()) / 1000))
+        return `Retrying in ${seconds}s`
+      }
+      return "Retrying"
+    }
+    const tool = activeTool()
+    if (tool) {
+      return `Running ${tool.tool.replaceAll("_", " ")}`
+    }
+    if (hasPendingAssistant()) return "Thinking"
+    if (status.type === "busy") return "Thinking"
+    return undefined
+  })
+  const [weaveMetrics, setWeaveMetrics] = createSignal<{
+    dagDepth: number
+    contextPressure: number
+    episodes: number
+    dispatches: number
+  }>()
+
+  createEffect(() => {
+    const id = params.id
+    if (!id) {
+      setWeaveMetrics(undefined)
+      return
+    }
+    let disposed = false
+    let timer: ReturnType<typeof setTimeout> | undefined
+    const refresh = async () => {
+      const weave = (sdk.client.session as any).weave as
+        | ((args: { sessionID: string }) => Promise<{ data?: any }>)
+        | undefined
+      const result = weave ? await weave({ sessionID: id }).catch(() => undefined) : undefined
+      if (disposed || !result?.data) return
+      const data = result.data as any
+      const summary = data.summary ?? {}
+      setWeaveMetrics({
+        dagDepth: Number(summary.dagDepth ?? 0),
+        contextPressure: Number(summary.contextPressure ?? 0),
+        episodes: Array.isArray(data.episodes) ? data.episodes.length : 0,
+        dispatches: Array.isArray(data.dispatches) ? data.dispatches.length : 0,
+      })
+      timer = setTimeout(refresh, 4000)
+    }
+    void refresh()
+    onCleanup(() => {
+      disposed = true
+      if (timer) clearTimeout(timer)
+    })
+  })
 
   const selectApp = (app: OpenApp) => {
     if (!options().some((item) => item.id === app)) return
@@ -301,6 +378,24 @@ export function SessionHeader() {
         {(mount) => (
           <Portal mount={mount()}>
             <div class="flex items-center gap-2">
+              <Show when={runningLabel()}>
+                {(label) => (
+                  <div class="hidden lg:flex items-center gap-1 rounded-md border border-border-weak-base bg-surface-panel px-2 h-6 text-11-medium text-text-weak">
+                    <Spinner class="size-3" style={{ color: tint() ?? "var(--icon-base)" }} />
+                    <span class="truncate max-w-60">{label()}</span>
+                  </div>
+                )}
+              </Show>
+              <Show when={weaveMetrics()}>
+                {(metrics) => (
+                  <div class="hidden lg:flex items-center gap-1 rounded-md border border-border-weak-base bg-surface-panel px-2 h-6 text-11-medium text-text-weak">
+                    <span class="truncate max-w-60">
+                      DAG {metrics().dagDepth} · CP {metrics().contextPressure} · E {metrics().episodes} · D{" "}
+                      {metrics().dispatches}
+                    </span>
+                  </div>
+                )}
+              </Show>
               <Show when={projectDirectory()}>
                 <div class="hidden xl:flex items-center">
                   <Show

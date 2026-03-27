@@ -13,6 +13,7 @@ export const WeaveDescribeTool = Tool.define("weave_describe", {
       metadata: {},
     })
     const store = await WeaveDB.read(ctx.sessionID)
+    const inspector = await WeaveDB.inspector(ctx.sessionID)
     const output = [
       `session: ${store.sessionID}`,
       `store_version: ${store.version}`,
@@ -21,6 +22,9 @@ export const WeaveDescribeTool = Tool.define("weave_describe", {
       `episodes: ${store.episodes.length}`,
       `dispatches: ${store.dispatches.length}`,
       `message_links: ${store.messageLinks.length}`,
+      `memory_records: ${store.memoryRecords.length}`,
+      `dag_depth: ${inspector.summary.dagDepth}`,
+      `context_pressure: ${inspector.summary.contextPressure}`,
       `updated_at: ${new Date(store.updatedAt).toISOString()}`,
     ].join("\n")
 
@@ -31,6 +35,9 @@ export const WeaveDescribeTool = Tool.define("weave_describe", {
         summaries: store.summaryNodes.length,
         episodes: store.episodes.length,
         dispatches: store.dispatches.length,
+        records: store.memoryRecords.length,
+        dag_depth: inspector.summary.dagDepth,
+        context_pressure: inspector.summary.contextPressure,
       },
       output,
     }

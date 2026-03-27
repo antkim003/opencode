@@ -136,6 +136,36 @@ export const { use: useSync, provider: SyncProvider } = createSimpleContext({
 
     sdk.event.listen((e) => {
       const event = e.details
+      if ((event as any).type === "session.weave.updated") {
+        const props = (event as any).properties as {
+          sessionID: string
+          summary: {
+            snapshots: number
+            summaryNodes: number
+            episodes: number
+            dispatches: number
+            records: number
+            dagDepth: number
+            contextPressure: number
+          }
+        }
+        setStore("weave", props.sessionID, (current) => ({
+          ...(current ?? {
+            sessionID: props.sessionID,
+            version: 1,
+            snapshots: [],
+            summaryNodes: [],
+            episodes: [],
+            dispatches: [],
+            messageLinks: [],
+            updatedAt: Date.now(),
+          }),
+          summary: props.summary,
+          updatedAt: Date.now(),
+        }))
+        void refreshWeave(props.sessionID)
+        return
+      }
       switch (event.type) {
         case "server.instance.disposed":
           bootstrap()
@@ -494,6 +524,58 @@ export const { use: useSync, provider: SyncProvider } = createSimpleContext({
           if (!last) return "idle"
           if (last.role === "user") return "working"
           return last.time.completed ? "idle" : "working"
+        },
+        execution(sessionID: string) {
+          const base = {
+            state: "idle" as "idle" | "running" | "retry",
+            label: undefined as string | undefined,
+            tool: undefined as string | undefined,
+          }
+          const status = store.session_status[sessionID]
+          if (status?.type === "retry") {
+            if (typeof status.next === "number") {
+              const seconds = Math.max(0, Math.ceil((status.next - Date.now()) / 1000))
+              return {
+                state: "retry" as const,
+                label: `Retrying in ${seconds}s`,
+                tool: undefined,
+              }
+            }
+            return {
+              state: "retry" as const,
+              label: "Retrying",
+              tool: undefined,
+            }
+          }
+          const messages = store.message[sessionID] ?? []
+          const pending = messages.findLast((message) => message.role === "assistant" && !message.time.completed)
+          if (pending) {
+            const parts = store.part[pending.id] ?? []
+            const tool = parts.findLast(
+              (part) => part.type === "tool" && (part.state.status === "pending" || part.state.status === "running"),
+            )
+            if (tool && tool.type === "tool") {
+              const normalized = tool.tool.replaceAll("_", " ")
+              return {
+                state: "running" as const,
+                label: `Running ${normalized}`,
+                tool: tool.tool,
+              }
+            }
+            return {
+              state: "running" as const,
+              label: "Thinking",
+              tool: undefined,
+            }
+          }
+          if (status?.type === "busy") {
+            return {
+              state: "running" as const,
+              label: "Thinking",
+              tool: undefined,
+            }
+          }
+          return base
         },
         async sync(sessionID: string) {
           if (fullSyncedSessions.has(sessionID)) return

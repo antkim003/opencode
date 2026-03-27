@@ -102,6 +102,7 @@ const context = createContext<{
   showTimestamps: () => boolean
   showDetails: () => boolean
   showGenericToolOutput: () => boolean
+  showTaskFiles: () => boolean
   diffWrapMode: () => "word" | "none"
   sync: ReturnType<typeof useSync>
   tui: ReturnType<typeof useTuiConfig>
@@ -141,6 +142,7 @@ export function Session() {
   const pending = createMemo(() => {
     return messages().findLast((x) => x.role === "assistant" && !x.time.completed)?.id
   })
+  const execution = createMemo(() => sync.session.execution(route.sessionID))
 
   const lastAssistant = createMemo(() => {
     return messages().findLast((x) => x.role === "assistant")
@@ -159,6 +161,7 @@ export function Session() {
   const [diffWrapMode] = kv.signal<"word" | "none">("diff_wrap_mode", "word")
   const [animationsEnabled, setAnimationsEnabled] = kv.signal("animations_enabled", true)
   const [showGenericToolOutput, setShowGenericToolOutput] = kv.signal("generic_tool_output_visibility", false)
+  const [showTaskFiles, setShowTaskFiles] = kv.signal("task_files_visibility", false)
 
   const wide = createMemo(() => dimensions().width > 120)
   const sidebarVisible = createMemo(() => {
@@ -253,7 +256,7 @@ export function Session() {
         `${logo[3] ?? ""}`,
         ``,
         `  ${weak("Session")}${UI.Style.TEXT_NORMAL_BOLD}${title}${UI.Style.TEXT_NORMAL}`,
-        `  ${weak("Continue")}${UI.Style.TEXT_NORMAL_BOLD}opencode -s ${session()?.id}${UI.Style.TEXT_NORMAL}`,
+        `  ${weak("Continue")}${UI.Style.TEXT_NORMAL_BOLD}weave -s ${session()?.id}${UI.Style.TEXT_NORMAL}`,
         ``,
       ].join("\n"),
     )
@@ -674,6 +677,16 @@ export function Session() {
       },
     },
     {
+      title: showTaskFiles() ? "Hide task explored files" : "Show task explored files",
+      value: "session.toggle.task_files",
+      keybind: "task_files_toggle",
+      category: "Session",
+      onSelect: (dialog) => {
+        setShowTaskFiles((prev) => !prev)
+        dialog.clear()
+      },
+    },
+    {
       title: "Page up",
       value: "session.page.up",
       keybind: "messages_page_up",
@@ -1059,6 +1072,7 @@ export function Session() {
         showTimestamps,
         showDetails,
         showGenericToolOutput,
+        showTaskFiles,
         diffWrapMode,
         sync,
         tui: tuiConfig,
@@ -1178,6 +1192,7 @@ export function Session() {
                         last={lastAssistant()?.id === message.id}
                         message={message as AssistantMessage}
                         parts={sync.data.part[message.id] ?? []}
+                        executionLabel={lastAssistant()?.id === message.id ? execution().label : undefined}
                       />
                     </Match>
                   </Switch>
@@ -1343,7 +1358,7 @@ function UserMessage(props: {
   )
 }
 
-function AssistantMessage(props: { message: AssistantMessage; parts: Part[]; last: boolean }) {
+function AssistantMessage(props: { message: AssistantMessage; parts: Part[]; last: boolean; executionLabel?: string }) {
   const local = useLocal()
   const { theme } = useTheme()
   const sync = useSync()
@@ -1376,12 +1391,25 @@ function AssistantMessage(props: { message: AssistantMessage; parts: Part[]; las
     if (props.message.error) return false
     return !hasVisibleContent()
   })
+  const activeTool = createMemo(() =>
+    props.parts.findLast(
+      (part): part is ToolPart =>
+        part.type === "tool" && (part.state.status === "pending" || part.state.status === "running"),
+    ),
+  )
+  const thinkingLabel = createMemo(() => {
+    const label = props.executionLabel
+    if (label) return label
+    const tool = activeTool()
+    if (!tool) return "Thinking..."
+    return `Thinking... ${tool.tool}`
+  })
 
   return (
     <>
       <Show when={showPendingCompact()}>
         <box paddingLeft={3} marginTop={1}>
-          <Spinner color={theme.textMuted}>Thinking...</Spinner>
+          <Spinner color={theme.textMuted}>{thinkingLabel()}</Spinner>
         </box>
       </Show>
       <For each={props.parts}>
@@ -1534,6 +1562,7 @@ function TextPart(props: { last: boolean; part: TextPart; message: AssistantMess
 function ToolPart(props: { last: boolean; part: ToolPart; message: AssistantMessage }) {
   const ctx = use()
   const sync = useSync()
+  const normalizedTool = createMemo(() => props.part.tool.toLowerCase())
 
   // Hide tool if showDetails is false and tool completed successfully
   const shouldHide = createMemo(() => {
@@ -1558,7 +1587,7 @@ function ToolPart(props: { last: boolean; part: ToolPart; message: AssistantMess
       return permissions[permissionIndex]
     },
     get tool() {
-      return props.part.tool
+      return normalizedTool()
     },
     get part() {
       return props.part
@@ -1568,70 +1597,76 @@ function ToolPart(props: { last: boolean; part: ToolPart; message: AssistantMess
   return (
     <Show when={!shouldHide()}>
       <Switch>
-        <Match when={props.part.tool === "bash"}>
+        <Match when={normalizedTool() === "bash"}>
           <Bash {...toolprops} />
         </Match>
-        <Match when={props.part.tool === "glob"}>
+        <Match when={normalizedTool() === "glob"}>
           <Glob {...toolprops} />
         </Match>
-        <Match when={props.part.tool === "read"}>
+        <Match when={normalizedTool() === "read"}>
           <Read {...toolprops} />
         </Match>
-        <Match when={props.part.tool === "grep"}>
+        <Match when={normalizedTool() === "grep"}>
           <Grep {...toolprops} />
         </Match>
-        <Match when={props.part.tool === "list"}>
+        <Match when={normalizedTool() === "list"}>
           <List {...toolprops} />
         </Match>
-        <Match when={props.part.tool === "webfetch"}>
+        <Match when={normalizedTool() === "webfetch"}>
           <WebFetch {...toolprops} />
         </Match>
-        <Match when={props.part.tool === "codesearch"}>
+        <Match when={normalizedTool() === "codesearch"}>
           <CodeSearch {...toolprops} />
         </Match>
-        <Match when={props.part.tool === "websearch"}>
+        <Match when={normalizedTool() === "websearch"}>
           <WebSearch {...toolprops} />
         </Match>
-        <Match when={props.part.tool === "write"}>
+        <Match when={normalizedTool() === "write"}>
           <Write {...toolprops} />
         </Match>
-        <Match when={props.part.tool === "edit"}>
+        <Match when={normalizedTool() === "edit"}>
           <Edit {...toolprops} />
         </Match>
-        <Match when={props.part.tool === "task"}>
+        <Match when={normalizedTool() === "task"}>
           <Task {...toolprops} />
         </Match>
-        <Match when={props.part.tool === "apply_patch"}>
+        <Match when={normalizedTool() === "apply_patch"}>
           <ApplyPatch {...toolprops} />
         </Match>
-        <Match when={props.part.tool === "todowrite"}>
+        <Match when={normalizedTool() === "todowrite"}>
           <TodoWrite {...toolprops} />
         </Match>
-        <Match when={props.part.tool === "question"}>
+        <Match when={normalizedTool() === "question"}>
           <Question {...toolprops} />
         </Match>
-        <Match when={props.part.tool === "skill"}>
+        <Match when={normalizedTool() === "skill"}>
           <Skill {...toolprops} />
         </Match>
-        <Match when={props.part.tool === "weave_describe"}>
+        <Match when={normalizedTool() === "weave_describe"}>
           <WeaveDescribe {...toolprops} />
         </Match>
-        <Match when={props.part.tool === "weave_grep"}>
+        <Match when={normalizedTool() === "weave_grep"}>
           <WeaveGrep {...toolprops} />
         </Match>
-        <Match when={props.part.tool === "weave_expand"}>
+        <Match when={normalizedTool() === "weave_expand"}>
           <WeaveExpand {...toolprops} />
         </Match>
-        <Match when={props.part.tool === "dispatch_thread"}>
+        <Match when={normalizedTool() === "weave_expand_query"}>
+          <WeaveExpandQuery {...toolprops} />
+        </Match>
+        <Match when={normalizedTool() === "weave_read"}>
+          <WeaveRead {...toolprops} />
+        </Match>
+        <Match when={normalizedTool() === "dispatch_thread"}>
           <DispatchThread {...toolprops} />
         </Match>
-        <Match when={props.part.tool === "dispatch_threads"}>
+        <Match when={normalizedTool() === "dispatch_threads"}>
           <DispatchThreads {...toolprops} />
         </Match>
-        <Match when={props.part.tool === "llm_map"}>
+        <Match when={normalizedTool() === "llm_map"}>
           <LlmMap {...toolprops} />
         </Match>
-        <Match when={props.part.tool === "agentic_map"}>
+        <Match when={normalizedTool() === "agentic_map"}>
           <AgenticMap {...toolprops} />
         </Match>
         <Match when={true}>
@@ -1667,7 +1702,12 @@ function GenericTool(props: ToolProps<any>) {
     <Show
       when={props.output && ctx.showGenericToolOutput()}
       fallback={
-        <InlineTool icon="⚙" pending="Writing command..." complete={true} part={props.part}>
+        <InlineTool
+          icon="⚙"
+          pending={props.part.state.status === "running" ? "Running..." : "Queued..."}
+          complete={props.part.state.status === "completed"}
+          part={props.part}
+        >
           {props.tool} {input(props.input)}
         </InlineTool>
       }
@@ -2064,6 +2104,26 @@ function WeaveExpand(props: ToolProps<any>) {
   )
 }
 
+function WeaveExpandQuery(props: ToolProps<any>) {
+  const m = props.metadata as any
+  const input = props.input as any
+  return (
+    <InlineTool icon="⌗" pending="Expanding Weave query..." complete={input.query} part={props.part}>
+      Weave expand query "{input.query}" <Show when={m.matches !== undefined}>({m.matches} matches)</Show>
+    </InlineTool>
+  )
+}
+
+function WeaveRead(props: ToolProps<any>) {
+  const m = props.metadata as any
+  const input = props.input as any
+  return (
+    <InlineTool icon="⟲" pending="Reading Weave record..." complete={input.id} part={props.part}>
+      Weave read {input.id} <Show when={m.found !== undefined}>({m.found ? "found" : "missing"})</Show>
+    </InlineTool>
+  )
+}
+
 function DispatchThread(props: ToolProps<any>) {
   const m = props.metadata as any
   const input = props.input as any
@@ -2106,6 +2166,7 @@ function AgenticMap(props: ToolProps<any>) {
 
 function Task(props: ToolProps<typeof TaskTool>) {
   const { theme } = useTheme()
+  const ctx = use()
   const keybind = useKeybind()
   const { navigate } = useRoute()
   const local = useLocal()
@@ -2122,7 +2183,7 @@ function Task(props: ToolProps<typeof TaskTool>) {
     return messages().flatMap((msg) =>
       (sync.data.part[msg.id] ?? [])
         .filter((part): part is ToolPart => part.type === "tool")
-        .map((part) => ({ tool: part.tool, state: part.state })),
+        .map((part) => ({ tool: part.tool, state: part.state, part })),
     )
   })
 
@@ -2137,6 +2198,45 @@ function Task(props: ToolProps<typeof TaskTool>) {
     return assistant - first
   })
 
+  const exploredFiles = createMemo(() => {
+    const result = new Set<string>()
+    for (const item of tools()) {
+      const tool = item.tool.toLowerCase()
+      const state = item.part.state
+      const input = (state.input ?? {}) as Record<string, unknown>
+      const metadata =
+        state.status === "pending" ? ({} as Record<string, unknown>) : ((state.metadata ?? {}) as Record<string, unknown>)
+
+      if (["read", "write", "edit", "grep", "list"].includes(tool)) {
+        const path = input.filePath ?? input.path
+        if (typeof path === "string" && path.trim()) {
+          result.add(normalizePath(path))
+        }
+      }
+
+      if (tool === "apply_patch") {
+        const files = metadata.files
+        if (Array.isArray(files)) {
+          for (const file of files) {
+            if (!file || typeof file !== "object") continue
+            const value = (file as Record<string, unknown>).relativePath ?? (file as Record<string, unknown>).filePath
+            if (typeof value === "string" && value.trim()) result.add(normalizePath(value))
+          }
+        }
+      }
+
+      if (tool === "read") {
+        const loaded = metadata.loaded
+        if (Array.isArray(loaded)) {
+          for (const path of loaded) {
+            if (typeof path === "string" && path.trim()) result.add(normalizePath(path))
+          }
+        }
+      }
+    }
+    return Array.from(result).sort((a, b) => a.localeCompare(b))
+  })
+
   const content = createMemo(() => {
     if (!props.input.description) return ""
     let content = [`Task ${props.input.description}`]
@@ -2149,6 +2249,13 @@ function Task(props: ToolProps<typeof TaskTool>) {
 
     if (props.part.state.status === "completed") {
       content.push(`└ ${tools().length} toolcalls · ${Locale.duration(duration())}`)
+    }
+
+    if (ctx.showTaskFiles() && exploredFiles().length > 0) {
+      content.push(`↳ files (${exploredFiles().length})`)
+      for (const filepath of exploredFiles()) {
+        content.push(`  • ${filepath}`)
+      }
     }
 
     return content.join("\n")
@@ -2400,12 +2507,20 @@ function normalizePath(input?: string) {
 }
 
 function input(input: Record<string, any>, omit?: string[]): string {
+  const hidden = new Set(["prompt", "content", "old_string", "new_string", "body"])
   const primitives = Object.entries(input).filter(([key, value]) => {
     if (omit?.includes(key)) return false
+    if (hidden.has(key)) return false
     return typeof value === "string" || typeof value === "number" || typeof value === "boolean"
   })
   if (primitives.length === 0) return ""
-  return `[${primitives.map(([key, value]) => `${key}=${value}`).join(", ")}]`
+  return `[${primitives
+    .map(([key, value]) => {
+      if (typeof value !== "string") return `${key}=${value}`
+      const compact = value.replace(/\s+/g, " ").trim()
+      return `${key}=${compact.length > 80 ? `${compact.slice(0, 80)}...` : compact}`
+    })
+    .join(", ")}]`
 }
 
 function filetype(input?: string) {

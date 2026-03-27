@@ -1,27 +1,20 @@
-import { ulid } from "ulid"
-import type { ExecutionRole, ThreadDispatch } from "./types"
+import { WeaveThread } from "./thread"
 import { WeaveDB } from "./db"
 
-export namespace WeaveThread {
-  export async function dispatch(input: {
+export namespace WeaveDispatch {
+  export async function thread(input: {
     sessionID: string
     parentSessionID: string
     action: string
     delegatedScope?: string
-    role?: ExecutionRole
-    toolProfile?: string
-    modelOverride?: string
   }) {
-    const dispatch: ThreadDispatch = {
-      threadID: ulid(),
+    const dispatch = await WeaveThread.dispatch({
+      sessionID: input.sessionID,
       parentSessionID: input.parentSessionID,
       action: input.action,
       delegatedScope: input.delegatedScope,
-      role: input.role ?? "thread",
-      toolProfile: input.toolProfile,
-      modelOverride: input.modelOverride,
-    }
-    await WeaveDB.appendDispatch(input.sessionID, dispatch)
+      role: "thread",
+    })
     await WeaveDB.appendMemoryRecord(input.sessionID, {
       id: `mem:${dispatch.threadID}`,
       kind: "dispatch",

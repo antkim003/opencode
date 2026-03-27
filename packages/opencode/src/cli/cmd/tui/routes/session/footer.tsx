@@ -21,10 +21,21 @@ export function Footer() {
     if (route.data.type !== "session") return undefined
     return sync.session.weave(route.data.sessionID)
   })
+  const execution = createMemo(() => {
+    if (route.data.type !== "session") return undefined
+    return sync.session.execution(route.data.sessionID)
+  })
+  const executionSummary = createMemo(() => {
+    const label = execution()?.label
+    if (!label) return undefined
+    return label.replace(/^Retrying in /, "Retry ")
+  })
   const weaveSummary = createMemo(() => {
     const state = weave()
     if (!state) return undefined
-    return `W:${state.snapshots.length}/${state.summaryNodes.length}/${state.episodes.length}/${state.dispatches.length}`
+    const dag = state.summary?.dagDepth ?? 0
+    const pressure = state.summary?.contextPressure ?? 0
+    return `W:${state.snapshots.length}/${state.summaryNodes.length}/${state.episodes.length}/${state.dispatches.length} DAG:${dag} CP:${pressure}`
   })
   const directory = useDirectory()
   const connected = useConnected()
@@ -78,6 +89,11 @@ export function Footer() {
             <Show when={weaveSummary()}>
               <text fg={theme.text}>
                 <span style={{ fg: theme.success }}>◉</span> {weaveSummary()}
+              </text>
+            </Show>
+            <Show when={executionSummary()}>
+              <text fg={theme.text}>
+                <span style={{ fg: theme.warning }}>◷</span> {executionSummary()}
               </text>
             </Show>
             <text fg={theme.text}>

@@ -22,6 +22,15 @@ export namespace WeaveRuntime {
       modelMessages: input.modelMessages,
     })
     await WeaveDB.appendSnapshot(input.sessionID, result.snapshot)
+    await WeaveDB.appendMemoryRecord(input.sessionID, {
+      id: `mem:snapshot:${Date.now()}`,
+      kind: "snapshot",
+      text: `role=${input.role}; summaries=${result.snapshot.summaryNodeIDs.length}; recent=${result.snapshot.recentMessageIDs.length}`,
+      metadata: {
+        summaries: result.snapshot.summaryNodeIDs.length,
+        recent: result.snapshot.recentMessageIDs.length,
+      },
+    })
     return result
   }
 }

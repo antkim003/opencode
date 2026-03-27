@@ -13,7 +13,7 @@ import { Spinner } from "@opencode-ai/ui/spinner"
 import { SessionTurn } from "@opencode-ai/ui/session-turn"
 import { ScrollView } from "@opencode-ai/ui/scroll-view"
 import { TextField } from "@opencode-ai/ui/text-field"
-import type { AssistantMessage, Message as MessageType, Part, TextPart, UserMessage } from "@opencode-ai/sdk/v2"
+import type { AssistantMessage, Message as MessageType, Part, TextPart, ToolPart, UserMessage } from "@opencode-ai/sdk/v2"
 import { showToast } from "@opencode-ai/ui/toast"
 import { Binary } from "@opencode-ai/util/binary"
 import { getFilename } from "@opencode-ai/util/path"
@@ -247,6 +247,64 @@ export function MessageTimeline(props: {
     const id = sessionID()
     if (!id) return idle
     return sync.data.session_status[id] ?? idle
+  })
+  const activeTool = createMemo(() => {
+    const messageID = pending()?.id
+    if (!messageID) return
+    const parts = sync.data.part[messageID] ?? []
+    return parts.findLast(
+      (part): part is ToolPart =>
+        part.type === "tool" && (part.state.status === "pending" || part.state.status === "running"),
+    )
+  })
+  const activeToolLabel = createMemo(() => {
+    const tool = activeTool()
+    if (!tool) return
+    return tool.tool.replaceAll("_", " ")
+  })
+  const workingLabel = createMemo(() => {
+    const status = sessionStatus()
+    if (status.type === "retry") {
+      if (typeof status.next === "number") {
+        const seconds = Math.max(0, Math.ceil((status.next - Date.now()) / 1000))
+        return `Retrying in ${seconds}s`
+      }
+      return "Retrying"
+    }
+    const tool = activeToolLabel()
+    if (tool) return `Running ${tool}`
+    if (pending()) return "Thinking"
+    if (status.type === "busy") return "Working"
+    return undefined
+  })
+  const [weaveSummary, setWeaveSummary] = createSignal<{ episodes: number; dispatches: number; dagDepth: number }>()
+  createEffect(() => {
+    const id = sessionID()
+    if (!id) {
+      setWeaveSummary(undefined)
+      return
+    }
+    let disposed = false
+    let timer: ReturnType<typeof setTimeout> | undefined
+    const refresh = async () => {
+      const weave = (sdk.client.session as any).weave as
+        | ((args: { sessionID: string }) => Promise<{ data?: any }>)
+        | undefined
+      const result = weave ? await weave({ sessionID: id }).catch(() => undefined) : undefined
+      if (disposed || !result?.data) return
+      const data = result.data as any
+      setWeaveSummary({
+        episodes: Array.isArray(data.episodes) ? data.episodes.length : 0,
+        dispatches: Array.isArray(data.dispatches) ? data.dispatches.length : 0,
+        dagDepth: Number(data.summary?.dagDepth ?? 0),
+      })
+      timer = setTimeout(refresh, 5000)
+    }
+    void refresh()
+    onCleanup(() => {
+      disposed = true
+      if (timer) clearTimeout(timer)
+    })
   })
   const working = createMemo(() => !!pending() || sessionStatus().type !== "idle")
   const tint = createMemo(() => messageAgentColor(sessionMessages(), sync.data.agent))
@@ -674,6 +732,21 @@ export function MessageTimeline(props: {
                           </div>
                         </Show>
                       </div>
+                      <Show when={workingStatus() !== "hidden" && workingLabel()}>
+                        <span
+                          class="text-12-regular text-text-weak shrink-0 transition-opacity duration-200 ease-out"
+                          classList={{ "opacity-0": workingStatus() === "hiding" }}
+                        >
+                          {workingLabel()}
+                        </span>
+                      </Show>
+                      <Show when={weaveSummary()}>
+                        {(summary) => (
+                          <span class="text-12-regular text-text-weak shrink-0">
+                            Episodes {summary().episodes} · Threads {summary().dispatches} · DAG {summary().dagDepth}
+                          </span>
+                        )}
+                      </Show>
                       <Show when={titleValue() || title.editing}>
                         <Show
                           when={title.editing}
@@ -995,6 +1068,7 @@ export function MessageTimeline(props: {
                         showReasoningSummaries={settings.general.showReasoningSummaries()}
                         shellToolDefaultOpen={settings.general.shellToolPartsExpanded()}
                         editToolDefaultOpen={settings.general.editToolPartsExpanded()}
+                        showTaskFiles={settings.general.taskToolFilesExpanded()}
                         classes={{
                           root: "min-w-0 w-full relative",
                           content: "flex flex-col justify-between !overflow-visible",

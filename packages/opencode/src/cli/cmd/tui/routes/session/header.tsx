@@ -52,12 +52,24 @@ const WeaveInfo = (props: { summary: Accessor<string | undefined> }) => {
   )
 }
 
+const ExecutionInfo = (props: { status: Accessor<string | undefined> }) => {
+  const { theme } = useTheme()
+  return (
+    <Show when={props.status()}>
+      <text fg={theme.textMuted} wrapMode="none" flexShrink={0}>
+        {props.status()}
+      </text>
+    </Show>
+  )
+}
+
 export function Header() {
   const route = useRouteData("session")
   const sync = useSync()
   const session = createMemo(() => sync.session.get(route.sessionID)!)
   const messages = createMemo(() => sync.data.message[route.sessionID] ?? [])
   const weave = createMemo(() => sync.session.weave(route.sessionID))
+  const execution = createMemo(() => sync.session.execution(route.sessionID))
 
   const cost = createMemo(() => {
     const total = pipe(
@@ -93,8 +105,11 @@ export function Header() {
   const weaveSummary = createMemo(() => {
     const state = weave()
     if (!state) return undefined
-    return `Weave S:${state.snapshots.length} N:${state.summaryNodes.length} E:${state.episodes.length} D:${state.dispatches.length}`
+    const dag = state.summary?.dagDepth ?? 0
+    const pressure = state.summary?.contextPressure ?? 0
+    return `Weave S:${state.snapshots.length} N:${state.summaryNodes.length} E:${state.episodes.length} D:${state.dispatches.length} DAG:${dag} CP:${pressure}`
   })
+  const executionStatus = createMemo(() => execution().label)
 
   const { theme } = useTheme()
   const keybind = useKeybind()
@@ -135,6 +150,7 @@ export function Header() {
 
                 <box flexDirection="column" alignItems={narrow() ? "flex-start" : "flex-end"}>
                   <ContextInfo context={context} cost={cost} />
+                  <ExecutionInfo status={executionStatus} />
                   <WeaveInfo summary={weaveSummary} />
                 </box>
               </box>
@@ -184,6 +200,7 @@ export function Header() {
               )}
               <box flexDirection="column" alignItems={narrow() ? "flex-start" : "flex-end"}>
                 <ContextInfo context={context} cost={cost} />
+                <ExecutionInfo status={executionStatus} />
                 <WeaveInfo summary={weaveSummary} />
               </box>
             </box>

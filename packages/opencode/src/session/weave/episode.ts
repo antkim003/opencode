@@ -20,6 +20,13 @@ export namespace WeaveEpisode {
       createdAt: Date.now(),
     }
     await WeaveDB.appendEpisode(input.sessionID, episode)
+    await WeaveDB.appendMemoryRecord(input.sessionID, {
+      id: `mem:${episode.id}`,
+      kind: "episode",
+      text: episode.summary,
+      refID: episode.id,
+      metadata: { status: episode.status },
+    })
     return episode
   }
 }

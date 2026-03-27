@@ -155,6 +155,7 @@ export const SessionWeaveCommand = cmd({
       }
 
       const state = await WeaveDB.read(sessionID)
+      const inspector = await WeaveDB.inspector(sessionID)
       if (args.full) {
         console.log(JSON.stringify(state, null, 2))
         return
@@ -168,6 +169,9 @@ export const SessionWeaveCommand = cmd({
           episodes: state.episodes.length,
           dispatches: state.dispatches.length,
           messageLinks: state.messageLinks.length,
+          memoryRecords: state.memoryRecords.length,
+          dagDepth: inspector.summary.dagDepth,
+          contextPressure: inspector.summary.contextPressure,
         },
         updatedAt: state.updatedAt,
       }

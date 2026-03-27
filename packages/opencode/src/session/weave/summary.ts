@@ -20,6 +20,13 @@ export namespace WeaveSummary {
       createdAt: Date.now(),
     }
     await WeaveDB.appendSummaryNode(input.sessionID, node)
+    await WeaveDB.appendMemoryRecord(input.sessionID, {
+      id: `mem:${node.id}`,
+      kind: "summary",
+      text: node.text,
+      refID: node.id,
+      metadata: { depth: node.depth },
+    })
     return node
   }
 

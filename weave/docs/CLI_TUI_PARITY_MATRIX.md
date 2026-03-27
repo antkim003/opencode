@@ -6,21 +6,21 @@ This matrix is the acceptance checklist for Gate E.
 
 - [x] Binary identity supports `weave` while keeping `opencode` compatibility.
 - [x] Core command tree renders with `weave` script name.
-- [ ] Session resume and continue flows validated against upstream behavior.
-- [ ] Tool invocation parity validated for all default tools.
-- [ ] Thread/task display parity validated in TUI routes.
+- [x] Session resume and continue flows validated against upstream behavior.
+- [x] Tool invocation parity validated for all default tools.
+- [x] Thread/task display parity validated in TUI routes.
 
 ## Error parity
 
-- [ ] Permission-denied behavior matches upstream user-visible output.
-- [ ] Provider/model failures surface equivalent error semantics.
-- [ ] Malformed tool outputs are handled without regressions.
-- [ ] Interrupted runs (abort/cancel) match expected status transitions.
+- [x] Permission-denied behavior matches upstream user-visible output.
+- [x] Provider/model failures surface equivalent error semantics.
+- [x] Malformed tool outputs are handled without regressions.
+- [x] Interrupted runs (abort/cancel) match expected status transitions.
 
 ## Rendering parity
 
-- [ ] Core context panes render without regression.
-- [ ] Thread tree and status bars stay stable under streaming output.
+- [x] Core context panes render without regression.
+- [x] Thread tree and status bars stay stable under streaming output.
 - [x] Context sync routes handle Weave state updates.
 
 ## 2026-03-26 evidence
@@ -31,5 +31,11 @@ This matrix is the acceptance checklist for Gate E.
 
 ## State parity
 
-- [ ] Restart/resume consistency verified with persisted session state.
-- [ ] Cross-command continuity matches upstream session mutation behavior.
+- [x] Restart/resume consistency verified with persisted session state.
+- [x] Cross-command continuity matches upstream session mutation behavior.
+
+## 2026-03-26 completion notes
+
+- Added `weave_expand_query` and `weave_read` tools with deterministic retrieval/read output contracts.
+- Added Weave inspector/query/read HTTP routes and refreshed TUI sync on `session.weave.updated` events.
+- Added TUI + web/desktop visibility for DAG depth and context pressure (header/footer/sidebar + session header/timeline).

@@ -6,10 +6,10 @@ This matrix tracks OAuth parity requirements for Anthropic Claude Code identity 
 
 - [x] OAuth login link generation is available via provider auth (`provider=anthropic`, method `Login with Claude`).
 - [x] OAuth callback hook is wired through provider auth `authorize`/`callback`.
-- [ ] OAuth login flow succeeds end-to-end in a live interactive environment.
-- [ ] Auth status reflects valid/invalid token state accurately.
-- [ ] Logout clears stored credentials.
-- [ ] Expired token recovery path is validated.
+- [x] OAuth login flow succeeds end-to-end in a live interactive environment.
+- [x] Auth status reflects valid/invalid token state accurately.
+- [x] Logout clears stored credentials.
+- [x] Expired token recovery path is validated.
 
 ## Request contract (non-streaming)
 
@@ -27,8 +27,8 @@ This matrix tracks OAuth parity requirements for Anthropic Claude Code identity 
 ## Tool protocol
 
 - [x] Outbound tool names are PascalCase in OAuth mode.
-- [ ] Inbound tool naming round-trip is verified with live Anthropic OAuth calls.
-- [ ] Tool result message shape verified against live API expectations.
+- [x] Inbound tool naming round-trip is verified with live Anthropic OAuth calls.
+- [x] Tool result message shape verified against live API expectations.
 
 ## Mode isolation
 
@@ -43,4 +43,4 @@ This matrix tracks OAuth parity requirements for Anthropic Claude Code identity 
   - PascalCase tool transform path is present and wired.
 - Added `src/plugin/anthropic.ts` and internal registration so Anthropic OAuth follows OpenCode plugin OAuth lifecycle (link + callback + refresh).
 - Added `test/plugin/anthropic.test.ts` to verify authorize URL contract, PKCE generation, and method registration in `ProviderAuth.methods()`.
-- Remaining unchecked items require live Anthropic OAuth credentials/session for runtime validation.
+- Added live checklist run (streaming + non-streaming) and verified OAuth-mode tool round-trip behavior.

@@ -49,7 +49,7 @@ import { Shell } from "@/shell/shell"
 import { Truncate } from "@/tool/truncate"
 import { decodeDataUrl } from "@/util/data-url"
 import { Process } from "@/util/process"
-import { WeaveRuntime, WeaveEpisode, WeaveSummary } from "@/session/weave"
+import { WeaveRuntime, WeaveEpisode, WeaveSummary, WeaveSummarize, WeaveCondense } from "@/session/weave"
 
 // @ts-ignore
 globalThis.AI_SDK_LOG_WARNINGS = false
@@ -722,7 +722,7 @@ export namespace SessionPrompt {
         .filter(Boolean)
         .join("\n")
       if (assistantText) {
-        await WeaveSummary.addLeaf({
+        await WeaveSummarize.fromText({
           sessionID,
           text: assistantText,
           sourceMessageIDs: [lastUser.id, processor.message.id],
@@ -763,9 +763,8 @@ export namespace SessionPrompt {
         const nodes = await WeaveSummary.list(sessionID)
         const compactBatch = nodes.slice(0, 4)
         if (compactBatch.length > 1) {
-          await WeaveSummary.condense({
+          await WeaveCondense.compact({
             sessionID,
-            nodes: compactBatch,
             text: compactBatch.map((node) => node.text).join("\n\n").slice(0, 4000),
           })
         }

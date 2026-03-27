@@ -190,6 +190,119 @@ export const SessionRoutes = lazy(() =>
       },
     )
     .get(
+      "/:sessionID/weave/inspector",
+      describeRoute({
+        summary: "Get Weave inspector state",
+        description: "Retrieve Weave DAG depth, context pressure, and latest nodes for inspector views.",
+        operationId: "session.weaveInspector",
+        responses: {
+          200: {
+            description: "Weave inspector state",
+            content: {
+              "application/json": {
+                schema: resolver(z.record(z.string(), z.any())),
+              },
+            },
+          },
+          ...errors(400, 404),
+        },
+      }),
+      validator(
+        "param",
+        z.object({
+          sessionID: SessionID.zod,
+        }),
+      ),
+      async (c) => {
+        const sessionID = c.req.valid("param").sessionID
+        await Session.get(sessionID)
+        return c.json(await WeaveDB.inspector(sessionID))
+      },
+    )
+    .get(
+      "/:sessionID/weave/query",
+      describeRoute({
+        summary: "Query Weave records",
+        description: "Search Weave retrieval records for inspector or memory tools.",
+        operationId: "session.weaveQuery",
+        responses: {
+          200: {
+            description: "Weave query matches",
+            content: {
+              "application/json": {
+                schema: resolver(z.array(z.record(z.string(), z.any()))),
+              },
+            },
+          },
+          ...errors(400, 404),
+        },
+      }),
+      validator(
+        "param",
+        z.object({
+          sessionID: SessionID.zod,
+        }),
+      ),
+      validator(
+        "query",
+        z.object({
+          q: z.string().min(1),
+          limit: z.coerce.number().int().positive().max(200).optional(),
+          kinds: z
+            .string()
+            .optional()
+            .transform((value) => value?.split(",").map((item) => item.trim()).filter(Boolean) ?? []),
+        }),
+      ),
+      async (c) => {
+        const { sessionID } = c.req.valid("param")
+        const query = c.req.valid("query")
+        await Session.get(sessionID)
+        const kinds = query.kinds.filter((item) => ["summary", "episode", "dispatch", "snapshot"].includes(item)) as
+          | Array<"summary" | "episode" | "dispatch" | "snapshot">
+          | undefined
+        return c.json(
+          await WeaveDB.queryRecords({
+            sessionID,
+            query: query.q,
+            limit: query.limit,
+            kinds: kinds?.length ? kinds : undefined,
+          }),
+        )
+      },
+    )
+    .get(
+      "/:sessionID/weave/read/:recordID",
+      describeRoute({
+        summary: "Read Weave record",
+        description: "Read a specific Weave retrieval record by id.",
+        operationId: "session.weaveRead",
+        responses: {
+          200: {
+            description: "Weave record",
+            content: {
+              "application/json": {
+                schema: resolver(z.record(z.string(), z.any()).nullable()),
+              },
+            },
+          },
+          ...errors(400, 404),
+        },
+      }),
+      validator(
+        "param",
+        z.object({
+          sessionID: SessionID.zod,
+          recordID: z.string(),
+        }),
+      ),
+      async (c) => {
+        const params = c.req.valid("param")
+        await Session.get(params.sessionID)
+        return c.json(await WeaveDB.readRecord(params.sessionID, params.recordID))
+      },
+    )
+    .get(
       "/:sessionID/todo",
       describeRoute({
         summary: "Get session todos",

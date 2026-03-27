@@ -116,6 +116,8 @@ export function Sidebar(props: { sessionID: string; overlay?: boolean }) {
                 <text fg={theme.textMuted}>Summaries: {weave()!.summaryNodes.length}</text>
                 <text fg={theme.textMuted}>Episodes: {weave()!.episodes.length}</text>
                 <text fg={theme.textMuted}>Dispatches: {weave()!.dispatches.length}</text>
+                <text fg={theme.textMuted}>DAG depth: {weave()!.summary?.dagDepth ?? 0}</text>
+                <text fg={theme.textMuted}>Context pressure: {weave()!.summary?.contextPressure ?? 0}</text>
               </box>
             </Show>
             <Show when={mcpEntries().length > 0}>
@@ -304,7 +306,7 @@ export function Sidebar(props: { sessionID: string; overlay?: boolean }) {
                     ✕
                   </text>
                 </box>
-                <text fg={theme.textMuted}>OpenCode includes free models so you can start immediately.</text>
+                <text fg={theme.textMuted}>Weave includes free models so you can start immediately.</text>
                 <text fg={theme.textMuted}>
                   Connect from 75+ providers to use other models, including Claude, GPT, Gemini etc
                 </text>

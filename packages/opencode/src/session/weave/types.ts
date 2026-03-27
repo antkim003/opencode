@@ -48,6 +48,39 @@ export type MessageLink = {
   linkedAt: number
 }
 
+export type MemoryRecordType = "summary" | "episode" | "dispatch" | "snapshot"
+
+export type MemoryRecord = {
+  id: string
+  sessionID: string
+  kind: MemoryRecordType
+  text: string
+  refID?: string
+  createdAt: number
+  metadata?: Record<string, string | number | boolean>
+}
+
+export type RetrievalMatch = {
+  id: string
+  kind: MemoryRecordType
+  score: number
+  text: string
+  refID?: string
+  createdAt: number
+}
+
+export type RetrievalQueryInput = {
+  sessionID: string
+  query: string
+  limit?: number
+  kinds?: MemoryRecordType[]
+}
+
+export type RetrievalReadInput = {
+  sessionID: string
+  id: string
+}
+
 export type BuildContextInput = {
   sessionID: string
   role: ExecutionRole

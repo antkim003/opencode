@@ -6,7 +6,17 @@ export type WeaveState = {
   episodes: unknown[]
   dispatches: unknown[]
   messageLinks: unknown[]
+  memoryRecords?: unknown[]
   updatedAt: number
+  summary?: {
+    snapshots: number
+    summaryNodes: number
+    episodes: number
+    dispatches: number
+    records: number
+    dagDepth: number
+    contextPressure: number
+  }
 }
 
 type WeaveClient = {
