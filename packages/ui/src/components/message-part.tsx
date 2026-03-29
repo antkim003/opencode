@@ -134,6 +134,7 @@ export interface MessageProps {
   actions?: UserActions
   showAssistantCopyPartID?: string | null
   showReasoningSummaries?: boolean
+  showTaskFiles?: boolean
 }
 
 export type SessionAction = (input: { sessionID: string; messageID: string }) => Promise<void> | void
@@ -149,6 +150,7 @@ export interface MessagePartProps {
   hideDetails?: boolean
   defaultOpen?: boolean
   showAssistantCopyPartID?: string | null
+  showTaskFiles?: boolean
   turnDurationMs?: number
 }
 
@@ -484,6 +486,7 @@ export function AssistantParts(props: {
   showReasoningSummaries?: boolean
   shellToolDefaultOpen?: boolean
   editToolDefaultOpen?: boolean
+  showTaskFiles?: boolean
 }) {
   const data = useData()
   const emptyParts: PartType[] = []
@@ -563,6 +566,7 @@ export function AssistantParts(props: {
                         part={item()!}
                         message={message()!}
                         showAssistantCopyPartID={props.showAssistantCopyPartID}
+                        showTaskFiles={props.showTaskFiles}
                         turnDurationMs={props.turnDurationMs}
                         defaultOpen={partDefaultOpen(item()!, props.shellToolDefaultOpen, props.editToolDefaultOpen)}
                       />
@@ -697,6 +701,7 @@ export function Message(props: MessageProps) {
             parts={props.parts}
             showAssistantCopyPartID={props.showAssistantCopyPartID}
             showReasoningSummaries={props.showReasoningSummaries}
+            showTaskFiles={props.showTaskFiles}
           />
         )}
       </Match>
@@ -709,6 +714,7 @@ export function AssistantMessageDisplay(props: {
   parts: PartType[]
   showAssistantCopyPartID?: string | null
   showReasoningSummaries?: boolean
+  showTaskFiles?: boolean
 }) {
   const emptyTools: ToolPart[] = []
   const part = createMemo(() => index(props.parts))
@@ -768,6 +774,7 @@ export function AssistantMessageDisplay(props: {
                       part={item()!}
                       message={props.message}
                       showAssistantCopyPartID={props.showAssistantCopyPartID}
+                      showTaskFiles={props.showTaskFiles}
                     />
                   </Show>
                 )
@@ -1123,6 +1130,7 @@ export function Part(props: MessagePartProps) {
         hideDetails={props.hideDetails}
         defaultOpen={props.defaultOpen}
         showAssistantCopyPartID={props.showAssistantCopyPartID}
+        showTaskFiles={props.showTaskFiles}
         turnDurationMs={props.turnDurationMs}
       />
     </Show>
@@ -1139,6 +1147,7 @@ export interface ToolProps {
   defaultOpen?: boolean
   forceOpen?: boolean
   locked?: boolean
+  showTaskFiles?: boolean
 }
 
 export type ToolComponent = Component<ToolProps>
@@ -1205,10 +1214,11 @@ PART_MAPPING["tool"] = function ToolPartDisplay(props) {
   const data = useData()
   const i18n = useI18n()
   const part = () => props.part as ToolPart
-  if (part().tool === "todowrite") return null
+  const normalizedTool = createMemo(() => part().tool.toLowerCase())
+  if (normalizedTool() === "todowrite") return null
 
   const hideQuestion = createMemo(
-    () => part().tool === "question" && (part().state.status === "pending" || part().state.status === "running"),
+    () => normalizedTool() === "question" && (part().state.status === "pending" || part().state.status === "running"),
   )
 
   const emptyInput: Record<string, any> = {}
@@ -1218,22 +1228,22 @@ PART_MAPPING["tool"] = function ToolPartDisplay(props) {
   // @ts-expect-error
   const partMetadata = () => part().state?.metadata ?? emptyMetadata
   const taskId = createMemo(() => {
-    if (part().tool !== "task") return
+    if (normalizedTool() !== "task") return
     const value = partMetadata().sessionId
     if (typeof value === "string" && value) return value
   })
   const taskHref = createMemo(() => {
-    if (part().tool !== "task") return
+    if (normalizedTool() !== "task") return
     return sessionLink(taskId(), useLocation().pathname, data.sessionHref)
   })
   const taskSubtitle = createMemo(() => {
-    if (part().tool !== "task") return undefined
+    if (normalizedTool() !== "task") return undefined
     const value = input().description
     if (typeof value === "string" && value) return value
     return taskId()
   })
 
-  const render = createMemo(() => ToolRegistry.render(part().tool) ?? GenericTool)
+  const render = createMemo(() => ToolRegistry.render(normalizedTool()) ?? GenericTool)
 
   return (
     <Show when={!hideQuestion()}>
@@ -1242,7 +1252,7 @@ PART_MAPPING["tool"] = function ToolPartDisplay(props) {
           <Match when={part().state.status === "error" && (part().state as any).error}>
             {(error) => {
               const cleaned = error().replace("Error: ", "")
-              if (part().tool === "question" && cleaned.includes("dismissed this question")) {
+              if (normalizedTool() === "question" && cleaned.includes("dismissed this question")) {
                 return (
                   <div style="width: 100%; display: flex; justify-content: flex-end;">
                     <span class="text-13-regular text-text-weak cursor-default">
@@ -1253,7 +1263,7 @@ PART_MAPPING["tool"] = function ToolPartDisplay(props) {
               }
               return (
                 <ToolErrorCard
-                  tool={part().tool}
+                  tool={normalizedTool()}
                   error={error()}
                   defaultOpen={props.defaultOpen}
                   subtitle={taskSubtitle()}
@@ -1266,13 +1276,14 @@ PART_MAPPING["tool"] = function ToolPartDisplay(props) {
             <Dynamic
               component={render()}
               input={input()}
-              tool={part().tool}
+              tool={normalizedTool()}
               metadata={partMetadata()}
               // @ts-expect-error
               output={part().state.output}
               status={part().state.status}
               hideDetails={props.hideDetails}
               defaultOpen={props.defaultOpen}
+              showTaskFiles={props.showTaskFiles}
             />
           </Match>
         </Switch>
@@ -1650,8 +1661,57 @@ ToolRegistry.register({
       return childSessionId()
     })
     const running = createMemo(() => props.status === "pending" || props.status === "running")
+    const showFiles = createMemo(() => !!props.showTaskFiles)
 
     const href = createMemo(() => sessionLink(childSessionId(), location.pathname, data.sessionHref))
+    const childMessages = createMemo(() => {
+      const sessionID = childSessionId()
+      if (!sessionID) return []
+      return data.store.message?.[sessionID] ?? []
+    })
+    const exploredFiles = createMemo(() => {
+      const files = new Set<string>()
+      const sessionID = childSessionId()
+      if (!sessionID) return []
+      const normalize = (value: string) => value.replaceAll("\\", "/")
+      for (const message of childMessages()) {
+        const parts = data.store.part?.[message.id] ?? []
+        for (const part of parts) {
+          if (!part || part.type !== "tool") continue
+          const tool = part.tool.toLowerCase()
+          const input = (part.state.input ?? {}) as Record<string, unknown>
+          const metadata = (part.state.status === "pending"
+            ? {}
+            : ((part.state.metadata ?? {}) as Record<string, unknown>)) as Record<string, unknown>
+
+          if (["read", "write", "edit", "list", "grep"].includes(tool)) {
+            const path = input.filePath ?? input.path
+            if (typeof path === "string" && path.trim()) files.add(normalize(path))
+          }
+
+          if (tool === "read") {
+            const loaded = metadata.loaded
+            if (Array.isArray(loaded)) {
+              for (const item of loaded) {
+                if (typeof item === "string" && item.trim()) files.add(normalize(item))
+              }
+            }
+          }
+
+          if (tool === "apply_patch") {
+            const patched = metadata.files
+            if (Array.isArray(patched)) {
+              for (const entry of patched) {
+                if (!entry || typeof entry !== "object") continue
+                const value = (entry as Record<string, unknown>).relativePath ?? (entry as Record<string, unknown>).filePath
+                if (typeof value === "string" && value.trim()) files.add(normalize(value))
+              }
+            }
+          }
+        }
+      }
+      return Array.from(files).sort((a, b) => a.localeCompare(b)).slice(0, 40)
+    })
 
     const titleContent = () => <TextShimmer text={title()} active={running()} />
 
@@ -1682,7 +1742,24 @@ ToolRegistry.register({
       </div>
     )
 
-    return <BasicTool icon="task" status={props.status} trigger={trigger()} hideDetails />
+    return (
+      <BasicTool
+        icon="task"
+        status={props.status}
+        trigger={trigger()}
+        hideDetails={!showFiles() || exploredFiles().length === 0}
+        forceOpen={showFiles() && exploredFiles().length > 0}
+      >
+        <div data-component="task-explored-files">
+          <div data-slot="task-explored-files-title">Explored files ({exploredFiles().length})</div>
+          <div data-slot="task-explored-files-list">
+            <For each={exploredFiles()}>
+              {(filePath) => <div data-slot="task-explored-file">{filePath}</div>}
+            </For>
+          </div>
+        </div>
+      </BasicTool>
+    )
   },
 })
 

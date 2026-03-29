@@ -21,6 +21,7 @@ import { createSessionTabs } from "@/pages/session/helpers"
 import { extractPromptFromParts } from "@/utils/prompt"
 import { UserMessage } from "@opencode-ai/sdk/v2"
 import { useSessionLayout } from "@/pages/session/session-layout"
+import { useSettings } from "@/context/settings"
 
 export type SessionCommandContext = {
   navigateMessageByOffset: (offset: number) => void
@@ -48,6 +49,7 @@ export const useSessionCommands = (actions: SessionCommandContext) => {
   const sync = useSync()
   const terminal = useTerminal()
   const layout = useLayout()
+  const settings = useSettings()
   const navigate = useNavigate()
   const { params, tabs, view } = useSessionLayout()
 
@@ -314,6 +316,14 @@ export const useSessionCommands = (actions: SessionCommandContext) => {
         title: language.t("command.input.focus"),
         keybind: "ctrl+l",
         onSelect: focusInput,
+      }),
+      viewCommand({
+        id: "task.files.toggle",
+        title: settings.general.taskToolFilesExpanded()
+          ? "Hide task explored files"
+          : "Show task explored files",
+        keybind: "ctrl+o",
+        onSelect: () => settings.general.setTaskToolFilesExpanded(!settings.general.taskToolFilesExpanded()),
       }),
       terminalCommand({
         id: "terminal.new",

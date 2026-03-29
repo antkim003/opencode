@@ -594,6 +594,32 @@
   }
 }
 
+[data-component="task-explored-files"] {
+  padding: 8px 0 6px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+[data-slot="task-explored-files-title"] {
+  color: var(--text-weaker);
+  font-size: 12px;
+  line-height: 1.3;
+}
+
+[data-slot="task-explored-files-list"] {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+[data-slot="task-explored-file"] {
+  color: var(--text-weak);
+  font-size: 12px;
+  line-height: 1.3;
+  word-break: break-all;
+}
+
 [data-component="todos"] {
   padding: 10px 0 24px 0;
   display: flex;

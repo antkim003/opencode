@@ -152,6 +152,14 @@ import type {
   SessionUnshareResponses,
   SessionUpdateErrors,
   SessionUpdateResponses,
+  SessionWeaveErrors,
+  SessionWeaveInspectorErrors,
+  SessionWeaveInspectorResponses,
+  SessionWeaveQueryErrors,
+  SessionWeaveQueryResponses,
+  SessionWeaveReadErrors,
+  SessionWeaveReadResponses,
+  SessionWeaveResponses,
   SubtaskPartInput,
   TextPartInput,
   ToolIdsErrors,
@@ -1537,6 +1545,146 @@ export class Session2 extends HeyApiClient {
     )
     return (options?.client ?? this.client).get<SessionChildrenResponses, SessionChildrenErrors, ThrowOnError>({
       url: "/session/{sessionID}/children",
+      ...options,
+      ...params,
+    })
+  }
+
+  /**
+   * Get Weave session state
+   *
+   * Retrieve Weave memory state (snapshots, episodes, summaries, thread dispatches) for a session.
+   */
+  public weave<ThrowOnError extends boolean = false>(
+    parameters: {
+      sessionID: string
+      directory?: string
+      workspace?: string
+    },
+    options?: Options<never, ThrowOnError>,
+  ) {
+    const params = buildClientParams(
+      [parameters],
+      [
+        {
+          args: [
+            { in: "path", key: "sessionID" },
+            { in: "query", key: "directory" },
+            { in: "query", key: "workspace" },
+          ],
+        },
+      ],
+    )
+    return (options?.client ?? this.client).get<SessionWeaveResponses, SessionWeaveErrors, ThrowOnError>({
+      url: "/session/{sessionID}/weave",
+      ...options,
+      ...params,
+    })
+  }
+
+  /**
+   * Get Weave inspector state
+   *
+   * Retrieve Weave DAG depth, context pressure, and latest nodes for inspector views.
+   */
+  public weaveInspector<ThrowOnError extends boolean = false>(
+    parameters: {
+      sessionID: string
+      directory?: string
+      workspace?: string
+    },
+    options?: Options<never, ThrowOnError>,
+  ) {
+    const params = buildClientParams(
+      [parameters],
+      [
+        {
+          args: [
+            { in: "path", key: "sessionID" },
+            { in: "query", key: "directory" },
+            { in: "query", key: "workspace" },
+          ],
+        },
+      ],
+    )
+    return (options?.client ?? this.client).get<
+      SessionWeaveInspectorResponses,
+      SessionWeaveInspectorErrors,
+      ThrowOnError
+    >({
+      url: "/session/{sessionID}/weave/inspector",
+      ...options,
+      ...params,
+    })
+  }
+
+  /**
+   * Query Weave records
+   *
+   * Search Weave retrieval records for inspector or memory tools.
+   */
+  public weaveQuery<ThrowOnError extends boolean = false>(
+    parameters: {
+      sessionID: string
+      directory?: string
+      workspace?: string
+      q: string
+      limit?: number
+      kinds?: string
+    },
+    options?: Options<never, ThrowOnError>,
+  ) {
+    const params = buildClientParams(
+      [parameters],
+      [
+        {
+          args: [
+            { in: "path", key: "sessionID" },
+            { in: "query", key: "directory" },
+            { in: "query", key: "workspace" },
+            { in: "query", key: "q" },
+            { in: "query", key: "limit" },
+            { in: "query", key: "kinds" },
+          ],
+        },
+      ],
+    )
+    return (options?.client ?? this.client).get<SessionWeaveQueryResponses, SessionWeaveQueryErrors, ThrowOnError>({
+      url: "/session/{sessionID}/weave/query",
+      ...options,
+      ...params,
+    })
+  }
+
+  /**
+   * Read Weave record
+   *
+   * Read a specific Weave retrieval record by id.
+   */
+  public weaveRead<ThrowOnError extends boolean = false>(
+    parameters: {
+      sessionID: string
+      recordID: string
+      directory?: string
+      workspace?: string
+    },
+    options?: Options<never, ThrowOnError>,
+  ) {
+    const params = buildClientParams(
+      [parameters],
+      [
+        {
+          args: [
+            { in: "path", key: "sessionID" },
+            { in: "path", key: "recordID" },
+            { in: "query", key: "directory" },
+            { in: "query", key: "workspace" },
+          ],
+        },
+      ],
+    )
+    return (options?.client ?? this.client).get<SessionWeaveReadResponses, SessionWeaveReadErrors, ThrowOnError>({
+      url: "/session/{sessionID}/weave/read/{recordID}",
       ...options,
       ...params,
     })

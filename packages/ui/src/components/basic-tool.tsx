@@ -140,6 +140,9 @@ export function BasicTool(props: BasicToolProps) {
                         >
                           <TextShimmer text={trigger().title} active={pending()} />
                         </span>
+                        <Show when={pending()}>
+                          <span data-slot="basic-tool-tool-status">{props.status === "running" ? "running" : "queued"}</span>
+                        </Show>
                         <Show when={!pending()}>
                           <Show when={trigger().subtitle}>
                             <span
@@ -218,11 +221,27 @@ function label(input: Record<string, unknown> | undefined) {
 
 function args(input: Record<string, unknown> | undefined) {
   if (!input) return []
-  const skip = new Set(["description", "query", "url", "filePath", "path", "pattern", "name"])
+  const skip = new Set([
+    "description",
+    "query",
+    "url",
+    "filePath",
+    "path",
+    "pattern",
+    "name",
+    "prompt",
+    "content",
+    "old_string",
+    "new_string",
+    "body",
+  ])
   return Object.entries(input)
     .filter(([key]) => !skip.has(key))
     .flatMap(([key, value]) => {
-      if (typeof value === "string") return [`${key}=${value}`]
+      if (typeof value === "string") {
+        const compact = value.replace(/\s+/g, " ").trim()
+        return [`${key}=${compact.length > 80 ? `${compact.slice(0, 80)}...` : compact}`]
+      }
       if (typeof value === "number") return [`${key}=${value}`]
       if (typeof value === "boolean") return [`${key}=${value}`]
       return []

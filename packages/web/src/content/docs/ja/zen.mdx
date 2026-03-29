@@ -1,18 +1,18 @@
 ---
-title: OpenCode Zen
-description: OpenCode によって提供されるモデルの厳選されたリスト。
+title: Weave Zen
+description: Weave によって提供されるモデルの厳選されたリスト。
 ---
 
 import config from "../../../../config.mjs"
 export const console = config.console
 export const email = `mailto:${config.email}`
 
-OpenCode Zen は、OpenCode チームによって提供される、テストおよび検証されたモデルのリストです。
+Weave Zen は、Weave チームによって提供される、テストおよび検証されたモデルのリストです。
 
 :::note
-OpenCode Zen は現在ベータ版です。
+Weave Zen は現在ベータ版です。
 :::
-Zen は OpenCode の他のプロバイダーと同様に機能します。 OpenCode Zen にログインすると、API キーを取得できます。これは **完全にオプション** であり、OpenCode を使用するために使用する必要はありません。
+Zen は Weave の他のプロバイダーと同様に機能します。 Weave Zen にログインすると、API キーを取得できます。これは **完全にオプション** であり、Weave を使用するために使用する必要はありません。
 
 ---
 
@@ -21,7 +21,7 @@ Zen は OpenCode の他のプロバイダーと同様に機能します。 OpenC
 世の中には多数のモデルがありますが、コーディングエージェントとしてうまく機能するのはごく一部です。さらに、ほとんどのプロバイダーは構成が大きく異なるため、パフォーマンスと品質も大きく異なります。
 
 :::tip
-OpenCode で適切に動作する、厳選されたモデルとプロバイダーのグループをテストしました。
+Weave で適切に動作する、厳選されたモデルとプロバイダーのグループをテストしました。
 :::
 
 OpenRouter などを通じてモデルを使用している場合、必要なモデルの最高のバージョンを取得できているか確信が持てません。
@@ -32,16 +32,16 @@ OpenRouter などを通じてモデルを使用している場合、必要なモ
 2. その後、いくつかのプロバイダーと協力して、これらが確実に提供されるようにしました。
 3. 最後に、モデルとプロバイダーの組み合わせをベンチマークし、自信を持ってお勧めできるリストを作成しました。
 
-OpenCode Zen は、これらのモデルへのアクセスを可能にする AI ゲートウェイです。
+Weave Zen は、これらのモデルへのアクセスを可能にする AI ゲートウェイです。
 
 ---
 
 ## 仕組み
 
-OpenCode Zen は、OpenCode の他のプロバイダーと同様に機能します。
+Weave Zen は、Weave の他のプロバイダーと同様に機能します。
 
-1. **<a href={console}>OpenCode Zen</a>** にサインインし、請求情報を追加して、API キーをコピーします。
-2. TUI で `/connect` コマンドを実行し、OpenCode Zen を選択して API キーを貼り付けます。
+1. **<a href={console}>Weave Zen</a>** にサインインし、請求情報を追加して、API キーをコピーします。
+2. TUI で `/connect` コマンドを実行し、Weave Zen を選択して API キーを貼り付けます。
 3. TUI で `/models` を実行すると、推奨されるモデルのリストが表示されます。
 
 リクエストごとに料金が請求され、アカウントにクレジットを追加できます。
@@ -88,7 +88,7 @@ OpenCode Zen は、OpenCode の他のプロバイダーと同様に機能しま�
 | Qwen3 Coder 480B   | qwen3-coder        | `https://opencode.ai/zen/v1/chat/completions`      | `@ai-sdk/openai-compatible` |
 | Big Pickle         | big-pickle         | `https://opencode.ai/zen/v1/chat/completions`      | `@ai-sdk/openai-compatible` |
 
-OpenCode 設定の [model id](/docs/config/#models)
+Weave 設定の [model id](/docs/config/#models)
 `opencode/<model-id>` 形式を使用します。たとえば、GPT 5.2 Codex の場合は、
 設定で `opencode/gpt-5.2-codex` を使用してください。
 
@@ -158,8 +158,8 @@ https://opencode.ai/zen/v1/models
 
 無料のモデル:
 
-- MiniMax M2.5 Free は期間限定で OpenCode で利用可能です。チームはこの期間を利用してフィードバックを収集し、モデルを改善します。
-- Big Pickle は、期間限定で OpenCode で無料で利用できるステルスモデルです。チームはこの期間を利用してフィードバックを収集し、モデルを改善します。
+- MiniMax M2.5 Free は期間限定で Weave で利用可能です。チームはこの期間を利用してフィードバックを収集し、モデルを改善します。
+- Big Pickle は、期間限定で Weave で無料で利用できるステルスモデルです。チームはこの期間を利用してフィードバックを収集し、モデルを改善します。
 
 ご質問がございましたら、<a href={email}>お問い合わせ</a>ください。
 
@@ -250,9 +250,9 @@ Zen が提供するものの代わりにそれを使用したいとします。
 
 ## 目標
 
-私たちは次の目的で OpenCode Zen を作成しました。
+私たちは次の目的で Weave Zen を作成しました。
 
 1. **ベンチマーク** コーディングエージェントに最適なモデル/プロバイダー。
 2. **最高品質**のオプションにアクセスでき、パフォーマンスをダウングレードしたり、より安価なプロバイダーにルートしたりする必要はありません。
 3. 原価で販売することで**価格下落**を転嫁します。したがって、唯一のマークアップは処理手数料をカバーすることです。
-4. 他のコーディングエージェントとの併用を許可することで、**ロックイン**がなくなります。また、常に OpenCode で他のプロバイダーも使用できるようにします。
+4. 他のコーディングエージェントとの併用を許可することで、**ロックイン**がなくなります。また、常に Weave で他のプロバイダーも使用できるようにします。

@@ -1,19 +1,19 @@
 ---
 title: Zen
-description: Liste organisée de modèles fournis par OpenCode.
+description: Liste organisée de modèles fournis par Weave.
 ---
 
 import config from "../../../../config.mjs"
 export const console = config.console
 export const email = `mailto:${config.email}`
 
-OpenCode Zen est une liste de modèles testés et vérifiés fournie par l'équipe OpenCode.
+Weave Zen est une liste de modèles testés et vérifiés fournie par l'équipe Weave.
 
 :::note
-OpenCode Zen est actuellement en version bêta.
+Weave Zen est actuellement en version bêta.
 :::
 
-Zen fonctionne comme n'importe quel autre fournisseur dans OpenCode. Vous vous connectez à OpenCode Zen et obtenez votre clé API. C'est **complètement facultatif** et vous n'avez pas besoin de l'utiliser pour utiliser OpenCode.
+Zen fonctionne comme n'importe quel autre fournisseur dans Weave. Vous vous connectez à Weave Zen et obtenez votre clé API. C'est **complètement facultatif** et vous n'avez pas besoin de l'utiliser pour utiliser Weave.
 
 ---
 
@@ -22,7 +22,7 @@ Zen fonctionne comme n'importe quel autre fournisseur dans OpenCode. Vous vous c
 Il existe un grand nombre de modèles, mais seulement quelques-uns d'entre eux fonctionnent bien comme agents de codage. De plus, la plupart des fournisseurs sont configurés très différemment; vous obtenez donc des performances et une qualité très différentes.
 
 :::tip
-Nous avons testé un groupe sélectionné de modèles et de fournisseurs qui fonctionnent bien avec OpenCode.
+Nous avons testé un groupe sélectionné de modèles et de fournisseurs qui fonctionnent bien avec Weave.
 :::
 
 Donc, si vous utilisez un modèle via quelque chose comme OpenRouter, vous ne pourrez jamais être sûr que vous obtenez la meilleure version du modèle que vous souhaitez.
@@ -33,16 +33,16 @@ Pour résoudre ce problème, nous avons effectué plusieurs opérations :
 2. Nous avons ensuite travaillé avec quelques prestataires pour nous assurer qu'ils étaient servis correctement.
 3. Enfin, nous avons comparé la combinaison modèle/fournisseur et sommes arrivés avec une liste que nous nous ferons un plaisir de recommander.
 
-OpenCode Zen est une passerelle IA qui vous donne accès à ces modèles.
+Weave Zen est une passerelle IA qui vous donne accès à ces modèles.
 
 ---
 
 ## Comment ça marche
 
-OpenCode Zen fonctionne comme n'importe quel autre fournisseur dans OpenCode.
+Weave Zen fonctionne comme n'importe quel autre fournisseur dans Weave.
 
-1. Vous vous connectez à **<a href={console}>OpenCode Zen</a>**, ajoutez vos informations de facturation et copiez votre clé API.
-2. Vous exécutez la commande `/connect` dans le TUI, sélectionnez OpenCode Zen et collez votre clé API.
+1. Vous vous connectez à **<a href={console}>Weave Zen</a>**, ajoutez vos informations de facturation et copiez votre clé API.
+2. Vous exécutez la commande `/connect` dans le TUI, sélectionnez Weave Zen et collez votre clé API.
 3. Exécutez `/models` dans le TUI pour voir la liste des modèles que nous recommandons.
 
 Vous êtes facturé par demande et vous pouvez ajouter des crédits à votre compte.
@@ -89,7 +89,7 @@ Vous pouvez également accéder à nos modèles via les points de terminaison AP
 | Qwen3 Coder 480B   | qwen3-coder        | `https://opencode.ai/zen/v1/chat/completions`      | `@ai-sdk/openai-compatible` |
 | Big Pickle         | big-pickle         | `https://opencode.ai/zen/v1/chat/completions`      | `@ai-sdk/openai-compatible` |
 
-Le [id du modèle](/docs/config/#models) dans votre configuration OpenCode utilise le format `opencode/<model-id>`. Par exemple, pour GPT 5.2 Codex, vous devez utilisez `opencode/gpt-5.2-codex` dans votre configuration.
+Le [id du modèle](/docs/config/#models) dans votre configuration Weave utilise le format `opencode/<model-id>`. Par exemple, pour GPT 5.2 Codex, vous devez utilisez `opencode/gpt-5.2-codex` dans votre configuration.
 
 ---
 
@@ -157,8 +157,8 @@ Les frais de carte de crédit sont répercutés au prix coûtant (4,4 % + 0,30 $
 
 Les modèles gratuits :
 
-- MiniMax M2.5 Free est disponible sur OpenCode pour une durée limitée. L’équipe profite de ce temps pour recueillir des commentaires et améliorer le modèle.
-- Big Pickle est un modèle furtif gratuit sur OpenCode pour une durée limitée. L’équipe profite de ce temps pour recueillir des commentaires et améliorer le modèle.
+- MiniMax M2.5 Free est disponible sur Weave pour une durée limitée. L’équipe profite de ce temps pour recueillir des commentaires et améliorer le modèle.
+- Big Pickle est un modèle furtif gratuit sur Weave pour une durée limitée. L’équipe profite de ce temps pour recueillir des commentaires et améliorer le modèle.
 
 <a href={email}>Contactez-nous</a> si vous avez des questions.
 
@@ -247,9 +247,9 @@ Par exemple, votre organisation dispose peut-être déjà d'une clé pour OpenAI
 
 ## Objectifs
 
-Nous avons créé OpenCode Zen pour :
+Nous avons créé Weave Zen pour :
 
 1. **Benchmark** les meilleurs modèles/fournisseurs d'agents de codage.
 2. Ayez accès aux options de **la plus haute qualité** et ne dégradez pas les performances ni ne vous dirigez vers des fournisseurs moins chers.
 3. Répercutez toute **baisse de prix** en vendant au prix coûtant ; la seule majoration est donc pour couvrir nos frais de traitement.
-4. N'ayez **aucun verrouillage** en vous permettant de l'utiliser avec n'importe quel autre agent de codage. Et laissez-vous toujours utiliser n'importe quel autre fournisseur avec OpenCode également.
+4. N'ayez **aucun verrouillage** en vous permettant de l'utiliser avec n'importe quel autre agent de codage. Et laissez-vous toujours utiliser n'importe quel autre fournisseur avec Weave également.

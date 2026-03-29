@@ -268,6 +268,22 @@ export type EventTodoUpdated = {
   }
 }
 
+export type EventSessionWeaveUpdated = {
+  type: "session.weave.updated"
+  properties: {
+    sessionID: string
+    summary: {
+      snapshots: number
+      summaryNodes: number
+      episodes: number
+      dispatches: number
+      records: number
+      dagDepth: number
+      contextPressure: number
+    }
+  }
+}
+
 export type EventTuiPromptAppend = {
   type: "tui.prompt.append"
   properties: {
@@ -984,6 +1000,7 @@ export type Event =
   | EventFileEdited
   | EventFileWatcherUpdated
   | EventTodoUpdated
+  | EventSessionWeaveUpdated
   | EventTuiPromptAppend
   | EventTuiCommandExecute
   | EventTuiToastShow
@@ -3155,6 +3172,154 @@ export type SessionChildrenResponses = {
 }
 
 export type SessionChildrenResponse = SessionChildrenResponses[keyof SessionChildrenResponses]
+
+export type SessionWeaveData = {
+  body?: never
+  path: {
+    sessionID: string
+  }
+  query?: {
+    directory?: string
+    workspace?: string
+  }
+  url: "/session/{sessionID}/weave"
+}
+
+export type SessionWeaveErrors = {
+  /**
+   * Bad request
+   */
+  400: BadRequestError
+  /**
+   * Not found
+   */
+  404: NotFoundError
+}
+
+export type SessionWeaveError = SessionWeaveErrors[keyof SessionWeaveErrors]
+
+export type SessionWeaveResponses = {
+  /**
+   * Weave session state
+   */
+  200: {
+    [key: string]: unknown
+  }
+}
+
+export type SessionWeaveResponse = SessionWeaveResponses[keyof SessionWeaveResponses]
+
+export type SessionWeaveInspectorData = {
+  body?: never
+  path: {
+    sessionID: string
+  }
+  query?: {
+    directory?: string
+    workspace?: string
+  }
+  url: "/session/{sessionID}/weave/inspector"
+}
+
+export type SessionWeaveInspectorErrors = {
+  /**
+   * Bad request
+   */
+  400: BadRequestError
+  /**
+   * Not found
+   */
+  404: NotFoundError
+}
+
+export type SessionWeaveInspectorError = SessionWeaveInspectorErrors[keyof SessionWeaveInspectorErrors]
+
+export type SessionWeaveInspectorResponses = {
+  /**
+   * Weave inspector state
+   */
+  200: {
+    [key: string]: unknown
+  }
+}
+
+export type SessionWeaveInspectorResponse = SessionWeaveInspectorResponses[keyof SessionWeaveInspectorResponses]
+
+export type SessionWeaveQueryData = {
+  body?: never
+  path: {
+    sessionID: string
+  }
+  query: {
+    directory?: string
+    workspace?: string
+    q: string
+    limit?: number
+    kinds?: string
+  }
+  url: "/session/{sessionID}/weave/query"
+}
+
+export type SessionWeaveQueryErrors = {
+  /**
+   * Bad request
+   */
+  400: BadRequestError
+  /**
+   * Not found
+   */
+  404: NotFoundError
+}
+
+export type SessionWeaveQueryError = SessionWeaveQueryErrors[keyof SessionWeaveQueryErrors]
+
+export type SessionWeaveQueryResponses = {
+  /**
+   * Weave query matches
+   */
+  200: Array<{
+    [key: string]: unknown
+  }>
+}
+
+export type SessionWeaveQueryResponse = SessionWeaveQueryResponses[keyof SessionWeaveQueryResponses]
+
+export type SessionWeaveReadData = {
+  body?: never
+  path: {
+    sessionID: string
+    recordID: string
+  }
+  query?: {
+    directory?: string
+    workspace?: string
+  }
+  url: "/session/{sessionID}/weave/read/{recordID}"
+}
+
+export type SessionWeaveReadErrors = {
+  /**
+   * Bad request
+   */
+  400: BadRequestError
+  /**
+   * Not found
+   */
+  404: NotFoundError
+}
+
+export type SessionWeaveReadError = SessionWeaveReadErrors[keyof SessionWeaveReadErrors]
+
+export type SessionWeaveReadResponses = {
+  /**
+   * Weave record
+   */
+  200: {
+    [key: string]: unknown
+  } | null
+}
+
+export type SessionWeaveReadResponse = SessionWeaveReadResponses[keyof SessionWeaveReadResponses]
 
 export type SessionTodoData = {
   body?: never

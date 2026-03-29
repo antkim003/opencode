@@ -1,4 +1,4 @@
-import { AssistantMessage, type FileDiff, Message as MessageType, Part as PartType } from "@opencode-ai/sdk/v2/client"
+import { AssistantMessage, type FileDiff, Message as MessageType, Part as PartType, ToolPart } from "@opencode-ai/sdk/v2/client"
 import type { SessionStatus } from "@opencode-ai/sdk/v2"
 import { useData } from "../context"
 import { useFileComponent } from "../context/file"
@@ -147,6 +147,7 @@ export function SessionTurn(
     showReasoningSummaries?: boolean
     shellToolDefaultOpen?: boolean
     editToolDefaultOpen?: boolean
+    showTaskFiles?: boolean
     active?: boolean
     status?: SessionStatus
     onUserInteracted?: () => void
@@ -369,6 +370,27 @@ export function SessionTurn(
     if (showReasoningSummaries()) return assistantVisible() === 0
     return true
   })
+  const activeToolLabel = createMemo(() => {
+    for (let i = assistantMessages().length - 1; i >= 0; i--) {
+      const message = assistantMessages()[i]
+      if (!message) continue
+      const parts = list(data.store.part?.[message.id], emptyParts)
+      for (let j = parts.length - 1; j >= 0; j--) {
+        const part = parts[j]
+        if (!part || part.type !== "tool") continue
+        const tool = part as ToolPart
+        if (tool.state.status !== "pending" && tool.state.status !== "running") continue
+        return tool.tool.replaceAll("_", " ")
+      }
+    }
+    return undefined
+  })
+  const thinkingText = createMemo(() => {
+    const base = i18n.t("ui.sessionTurn.status.thinking")
+    const tool = activeToolLabel()
+    if (!tool) return base
+    return `${base} - ${tool}`
+  })
 
   const autoScroll = createAutoScroll({
     working,
@@ -410,12 +432,13 @@ export function SessionTurn(
                     showReasoningSummaries={showReasoningSummaries()}
                     shellToolDefaultOpen={props.shellToolDefaultOpen}
                     editToolDefaultOpen={props.editToolDefaultOpen}
+                    showTaskFiles={props.showTaskFiles}
                   />
                 </div>
               </Show>
               <Show when={showThinking()}>
                 <div data-slot="session-turn-thinking">
-                  <TextShimmer text={i18n.t("ui.sessionTurn.status.thinking")} />
+                  <TextShimmer text={thinkingText()} />
                   <Show when={!showReasoningSummaries()}>
                     <TextReveal
                       text={reasoningHeading()}

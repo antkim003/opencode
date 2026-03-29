@@ -26,6 +26,7 @@ export interface Settings {
     showReasoningSummaries: boolean
     shellToolPartsExpanded: boolean
     editToolPartsExpanded: boolean
+    taskToolFilesExpanded: boolean
   }
   updates: {
     startup: boolean
@@ -50,6 +51,7 @@ const defaultSettings: Settings = {
     showReasoningSummaries: false,
     shellToolPartsExpanded: true,
     editToolPartsExpanded: false,
+    taskToolFilesExpanded: false,
   },
   updates: {
     startup: true,
@@ -163,6 +165,13 @@ export const { use: useSettings, provider: SettingsProvider } = createSimpleCont
         ),
         setEditToolPartsExpanded(value: boolean) {
           setStore("general", "editToolPartsExpanded", value)
+        },
+        taskToolFilesExpanded: withFallback(
+          () => store.general?.taskToolFilesExpanded,
+          defaultSettings.general.taskToolFilesExpanded,
+        ),
+        setTaskToolFilesExpanded(value: boolean) {
+          setStore("general", "taskToolFilesExpanded", value)
         },
       },
       updates: {
