@@ -1538,7 +1538,7 @@ NOTE: At any point in time through this workflow you should feel free to ask the
                 })
 
                 // Weave: summarize assistant text for memory retrieval
-                const assistantParts = yield* Effect.promise(() => MessageV2.parts(handle.message.id))
+                const assistantParts = yield* Effect.sync(() => MessageV2.parts(handle.message.id))
                 const assistantText = assistantParts
                   .filter((part): part is MessageV2.TextPart => part.type === "text")
                   .map((part) => part.text.trim())

@@ -1,4 +1,5 @@
 import z from "zod"
+import { Effect } from "effect"
 import { Tool } from "./tool"
 import { DispatchThreadTool } from "./dispatch-thread"
 
@@ -9,37 +10,44 @@ const parameters = z.object({
   items: z.array(z.string()).min(1).max(50),
 })
 
-export const AgenticMapTool = Tool.define("agentic_map", {
-  description: "Dispatch agent-backed map tasks where each item runs as a typed Weave thread.",
-  parameters,
-  async execute(params, ctx) {
-    await ctx.ask({
-      permission: "agentic_map",
-      patterns: [params.subagent_type],
-      always: ["*"],
-      metadata: { count: params.items.length },
-    })
-
-    const dispatch = await DispatchThreadTool.init()
-    const output: string[] = []
-    for (const [index, item] of params.items.entries()) {
-      const result = await dispatch.execute(
-        {
-          subagent_type: params.subagent_type,
-          description: params.description_template.replaceAll("{{item}}", item),
-          prompt: params.prompt_template.replaceAll("{{item}}", item),
-        },
-        ctx,
-      )
-      output.push(`## ${index + 1}. ${item}`)
-      output.push(result.output)
-      output.push("")
-    }
+export const AgenticMapTool = Tool.defineEffect(
+  "agentic_map",
+  Effect.gen(function* () {
+    const dispatchInfo = yield* DispatchThreadTool
+    const dispatchDef = yield* Tool.init(dispatchInfo)
 
     return {
-      title: "Agentic map",
-      metadata: { count: params.items.length },
-      output: output.join("\n").trim(),
+      description: "Dispatch agent-backed map tasks where each item runs as a typed Weave thread.",
+      parameters,
+      async execute(params: z.infer<typeof parameters>, ctx: Tool.Context) {
+        await ctx.ask({
+          permission: "agentic_map",
+          patterns: [params.subagent_type],
+          always: ["*"],
+          metadata: { count: params.items.length },
+        })
+
+        const output: string[] = []
+        for (const [index, item] of params.items.entries()) {
+          const result = await dispatchDef.execute(
+            {
+              subagent_type: params.subagent_type,
+              description: params.description_template.replaceAll("{{item}}", item),
+              prompt: params.prompt_template.replaceAll("{{item}}", item),
+            },
+            ctx,
+          )
+          output.push(`## ${index + 1}. ${item}`)
+          output.push(result.output)
+          output.push("")
+        }
+
+        return {
+          title: "Agentic map",
+          metadata: { count: params.items.length },
+          output: output.join("\n").trim(),
+        }
+      },
     }
-  },
-})
+  }),
+)

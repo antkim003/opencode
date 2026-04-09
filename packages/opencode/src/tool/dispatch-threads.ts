@@ -1,4 +1,5 @@
 import z from "zod"
+import { Effect } from "effect"
 import { Tool } from "./tool"
 import { DispatchThreadTool } from "./dispatch-thread"
 
@@ -18,52 +19,59 @@ const parameters = z.object({
     .describe("List of thread dispatch inputs."),
 })
 
-export const DispatchThreadsTool = Tool.define("dispatch_threads", {
-  description: "Dispatch multiple Weave threads with bounded concurrency and deterministic output ordering.",
-  parameters,
-  async execute(params, ctx) {
-    await ctx.ask({
-      permission: "dispatch_threads",
-      patterns: [params.subagent_type],
-      always: ["*"],
-      metadata: { count: params.items.length, concurrency: params.concurrency },
-    })
-
-    const tool = await DispatchThreadTool.init()
-    const itemCount = params.items.length
-    const concurrency = Math.min(params.concurrency ?? 3, itemCount)
-    const outputs = new Array<string>(itemCount)
-    let nextIndex = 0
-
-    await Promise.all(
-      Array.from({ length: concurrency }, async () => {
-        while (true) {
-          const index = nextIndex++
-          if (index >= itemCount) return
-          const item = params.items[index]
-          const result = await tool.execute(
-            {
-              description: item.description,
-              prompt: item.prompt,
-              subagent_type: params.subagent_type,
-              delegated_scope: item.delegated_scope,
-            },
-            ctx,
-          )
-          outputs[index] = [`## item ${index + 1}`, result.output].join("\n")
-        }
-      }),
-    )
-
-    const lines: string[] = []
-    for (const output of outputs) {
-      lines.push(output)
-    }
+export const DispatchThreadsTool = Tool.defineEffect(
+  "dispatch_threads",
+  Effect.gen(function* () {
+    const dispatchInfo = yield* DispatchThreadTool
+    const dispatchDef = yield* Tool.init(dispatchInfo)
 
     return {
-      title: "Batch thread dispatch",
-      metadata: { count: itemCount, concurrency },
-      output: lines.join("\n\n").trim(),
+      description: "Dispatch multiple Weave threads with bounded concurrency and deterministic output ordering.",
+      parameters,
+      async execute(params: z.infer<typeof parameters>, ctx: Tool.Context) {
+        await ctx.ask({
+          permission: "dispatch_threads",
+          patterns: [params.subagent_type],
+          always: ["*"],
+          metadata: { count: params.items.length, concurrency: params.concurrency },
+        })
+
+        const itemCount = params.items.length
+        const concurrency = Math.min(params.concurrency ?? 3, itemCount)
+        const outputs = new Array<string>(itemCount)
+        let nextIndex = 0
+
+        await Promise.all(
+          Array.from({ length: concurrency }, async () => {
+            while (true) {
+              const index = nextIndex++
+              if (index >= itemCount) return
+              const item = params.items[index]
+              const result = await dispatchDef.execute(
+                {
+                  description: item.description,
+                  prompt: item.prompt,
+                  subagent_type: params.subagent_type,
+                  delegated_scope: item.delegated_scope,
+                },
+                ctx,
+              )
+              outputs[index] = [`## item ${index + 1}`, result.output].join("\n")
+            }
+          }),
+        )
+
+        const lines: string[] = []
+        for (const output of outputs) {
+          lines.push(output)
+        }
+
+        return {
+          title: "Batch thread dispatch",
+          metadata: { count: itemCount, concurrency },
+          output: lines.join("\n\n").trim(),
+        }
+      },
     }
-  },
-})
+  }),
+)

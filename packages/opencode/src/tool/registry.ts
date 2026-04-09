@@ -92,6 +92,9 @@ export namespace ToolRegistry {
       const plugin = yield* Plugin.Service
 
       const task = yield* TaskTool
+      const dispatchThread = yield* DispatchThreadTool
+      const dispatchThreads = yield* DispatchThreadsTool
+      const agenticMap = yield* AgenticMapTool
       const read = yield* ReadTool
       const question = yield* QuestionTool
       const todo = yield* TodoWriteTool
@@ -174,10 +177,10 @@ export namespace ToolRegistry {
             weaveExpand: Tool.init(WeaveExpandTool),
             weaveExpandQuery: Tool.init(WeaveExpandQueryTool),
             weaveRead: Tool.init(WeaveReadTool),
-            dispatchThread: Tool.init(DispatchThreadTool),
-            dispatchThreads: Tool.init(DispatchThreadsTool),
+            dispatchThread: Tool.init(dispatchThread),
+            dispatchThreads: Tool.init(dispatchThreads),
             llmMap: Tool.init(LlmMapTool),
-            agenticMap: Tool.init(AgenticMapTool),
+            agenticMap: Tool.init(agenticMap),
           })
 
           return {
