@@ -51,24 +51,25 @@ import { AgenticMapTool } from "./agentic-map"
 export namespace ToolRegistry {
   const log = Log.create({ service: "tool.registry" })
 
+  type TaskDef = Tool.InferDef<typeof TaskTool>
+  type ReadDef = Tool.InferDef<typeof ReadTool>
+
   type State = {
     custom: Tool.Def[]
     builtin: Tool.Def[]
+    task: TaskDef
+    read: ReadDef
   }
 
   export interface Interface {
     readonly ids: () => Effect.Effect<string[]>
     readonly all: () => Effect.Effect<Tool.Def[]>
-    readonly named: {
-      task: Tool.Info
-      read: Tool.Info
-    }
+    readonly named: () => Effect.Effect<{ task: TaskDef; read: ReadDef }>
     readonly tools: (model: {
       providerID: ProviderID
       modelID: ModelID
       agent: Agent.Info
     }) => Effect.Effect<Tool.Def[]>
-    readonly fromID: (id: string) => Effect.Effect<Tool.Def>
   }
 
   export class Service extends ServiceMap.Service<Service, Interface>()("@opencode/ToolRegistry") {}
@@ -213,6 +214,8 @@ export namespace ToolRegistry {
               ...(Flag.OPENCODE_EXPERIMENTAL_LSP_TOOL ? [tool.lsp] : []),
               ...(Flag.OPENCODE_EXPERIMENTAL_PLAN_MODE && Flag.OPENCODE_CLIENT === "cli" ? [tool.plan] : []),
             ],
+            task: tool.task,
+            read: tool.read,
           }
         }),
       )
@@ -220,13 +223,6 @@ export namespace ToolRegistry {
       const all: Interface["all"] = Effect.fn("ToolRegistry.all")(function* () {
         const s = yield* InstanceState.get(state)
         return [...s.builtin, ...s.custom] as Tool.Def[]
-      })
-
-      const fromID: Interface["fromID"] = Effect.fn("ToolRegistry.fromID")(function* (id: string) {
-        const tools = yield* all()
-        const match = tools.find((tool) => tool.id === id)
-        if (!match) return yield* Effect.die(`Tool not found: ${id}`)
-        return match
       })
 
       const ids: Interface["ids"] = Effect.fn("ToolRegistry.ids")(function* () {
@@ -275,7 +271,12 @@ export namespace ToolRegistry {
         )
       })
 
-      return Service.of({ ids, all, named: { task, read }, tools, fromID })
+      const named: Interface["named"] = Effect.fn("ToolRegistry.named")(function* () {
+        const s = yield* InstanceState.get(state)
+        return { task: s.task, read: s.read }
+      })
+
+      return Service.of({ ids, all, named, tools })
     }),
   )
 
